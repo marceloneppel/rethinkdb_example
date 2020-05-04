@@ -5,7 +5,7 @@ import 'package:rethinkdb_dart/rethinkdb_dart.dart';
 const databaseName = 'testdatabase';
 const tableName = 'testtable';
 
-Future<Null> run() async {
+Future<Null> run(bool withInserts) async {
   var r = Rethinkdb();
   var connection = await r.connect();
   await setup(r, connection);
@@ -14,15 +14,17 @@ Future<Null> run() async {
   feed.listen((data) {
     print('feed data: $data');
   });
-  Timer.periodic(Duration(seconds: 1), (timer) async {
-    var record = {'id': 1, 'time': DateTime.now()};
-    var count = await r.table(tableName).count().run(connection);
-    if (count > 0) {
-      await r.table(tableName).update(record).run(connection);
-    } else {
-      await r.table(tableName).insert(record).run(connection);
-    }
-  });
+  if (withInserts) {
+    Timer.periodic(Duration(seconds: 1), (timer) async {
+      var record = {'id': 1, 'time': DateTime.now()};
+      var count = await r.table(tableName).count().run(connection);
+      if (count > 0) {
+        await r.table(tableName).update(record).run(connection);
+      } else {
+        await r.table(tableName).insert(record).run(connection);
+      }
+    });
+  }
 }
 
 Future<Null> setup(Rethinkdb r, Connection connection) async {
